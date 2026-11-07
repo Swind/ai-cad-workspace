@@ -50,6 +50,21 @@
 
 ## 發布
 
+補充：CI #2（42385097802）與 Release #2（42385097676）已確認 Success；此結果對應補充 mesh 依賴前的版本。
+
+## text-to-cad 環境補充驗證（2026-11-07）
+
+- 對照上游 v0.10.4 `docs/install.md` 與 `skills/{dfm,dfam-check}/requirements.txt`。
+- 原有 Python 3.14、CAD/kernel/MCP、Xvfb、Mesa、X11 與字型已滿足核心流程。
+- 補入固定版本 trimesh、Rtree、NetworkX、lxml；NumPy/SciPy 已存在，新增為明確依賴。原有 lock 中的套件版本未變動。
+- `docker build -t ai-cad-workspace:cad-env .`：PASS。
+- 使用 `docker run --network none --init`、全新 `/tmp/offline-home`、UID/GID 1500:1500 啟動 Xvfb 與 CAD：PASS。
+- 該斷網容器執行 `scripts/smoke-cad.sh`：建模、STEP/STL、top/iso PNG 與幾何驗證全部 PASS。
+- `tests/check-mesh-deps.py`：mesh split、R-tree ray casting、3MF export/reimport 體積驗證 PASS，納入既有 smoke test。
+- OrcaSlicer／實體印表機整合未安裝或測試；任意模型額外宣告的 Python 依賴不在離線保證內。
+
+### 前一版發布紀錄
+
 Debian snapshot 固定後，`docker build -t ai-cad-workspace:verified .` 與
 `TEST_UID=23456 TEST_GID=23457 bash tests/test-container.sh ai-cad-workspace:verified` 已成功；本機 Image ID
 `sha256:6e24cfeb6e862bd8f0baac838043e0fec4f946414ac312568db386a49edd627c`（此為本機 image ID，不是 GHCR 發布 digest）。

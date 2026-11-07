@@ -47,6 +47,13 @@ Codex 使用 device login；Claude Code 首次執行依提示登入；OpenCode �
 
 ## CAD
 
+Image 已依 text-to-cad v0.10.4 預裝 Python 3.14、uv、`cad-server`、`cad-mcp`、
+`cad[build123d]`（含 OpenCascade/OCP），以及 Xvfb、Mesa software OpenGL、X11 libraries 與字型。
+核心與 kernel 同在 `/opt/cad`，首次建模、STEP/STL 匯出及 PNG 截圖不用再下載環境。
+另預裝官方 `dfm`／`dfam-check` 的 trimesh、NumPy、Rtree、SciPy、NetworkX、lxml，
+版本與 hashes 固定在 `requirements.lock`。OrcaSlicer 切片及印表機整合屬額外工具，未包含；
+模型自行宣告的其他 Python 套件仍可能需要網路安裝。
+
 ```bash
 # 容器 shell
 /opt/ai-cad/scripts/smoke-cad.sh
