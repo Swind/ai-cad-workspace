@@ -1,0 +1,31 @@
+services:
+  ai-cad:
+    image: ${IMAGE:-ghcr.io/swind/ai-cad-workspace:main}
+    build:
+      context: .
+    platform: linux/amd64
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 60s
+    environment:
+      HOME: /home/agent
+      PUID: ${HOST_UID:?Set HOST_UID in .env}
+      PGID: ${HOST_GID:?Set HOST_GID in .env}
+      OVIS_TOKEN: ${OVIS_TOKEN:?Set OVIS_TOKEN in .env}
+    ports:
+      - '${OVIS_BIND_IP:-0.0.0.0}:7317:7317'
+      - '${CAD_BIND_IP:-0.0.0.0}:3245:3245'
+    volumes:
+      - type: bind
+        source: ./home
+        target: /home/agent
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./workspace
+        target: /workspace
+        bind:
+          create_host_path: false
+    working_dir: /workspace
+    security_opt:
+      - no-new-privileges:true

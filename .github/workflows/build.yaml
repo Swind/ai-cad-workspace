@@ -1,0 +1,80 @@
+name: Build and verify image
+on:
+  workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        required: true
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Compose validation
+        run: HOST_UID=12345 HOST_GID=12346 OVIS_TOKEN=ci-only docker compose config --quiet
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - id: image
+        name: Image name and stable release detection
+        shell: bash
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo 'stable=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'stable=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        id: meta
+        with:
+          images: ${{ steps.image.outputs.name }}
+          flavor: latest=false
+          tags: |
+            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag
+            type=semver,pattern=v{{major}}.{{minor}},enable=${{ steps.image.outputs.stable == 'true' }}
+            type=raw,value=latest,enable=${{ steps.image.outputs.stable == 'true' }}
+            type=sha,prefix=sha-
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: ai-cad-workspace:test
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Integration and failure recovery
+        env:
+          TEST_UID: '12345'
+          TEST_GID: '12346'
+        run: bash tests/test-container.sh ai-cad-workspace:test
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        if: inputs.publish
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish the exact tested image
+        if: inputs.publish
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        shell: bash
+        run: |
+          while IFS= read -r tag; do
+            docker tag ai-cad-workspace:test "$tag"
+            docker push "$tag"
+          done <<< "$TAGS"
+          docker inspect ai-cad-workspace:test --format '{{json .RepoDigests}}' | tee digest.json
+          echo '### Published image digests' >> "$GITHUB_STEP_SUMMARY"
+          cat digest.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: acceptance-evidence
+          path: |
+            /tmp/ai-cad-test-*/container.log
+            /tmp/ai-cad-test-*/before-recreate.log
+            /tmp/ai-cad-test-*/supervisor.log
+            /tmp/ai-cad-test-*/workspace/smoke-*/*.png
+            digest.json

@@ -1,0 +1,5 @@
+cad-server==0.10.4
+cad[build123d]==0.10.4
+cad-mcp==0.10.4
+jsonschema==4.25.1
+PyYAML==6.0.3

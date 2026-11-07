@@ -1,0 +1,85 @@
+# Schema: F1bonacc1/process-compose v1.124.0
+version: '0.5'
+is_strict: true
+shell:
+  shell_command: /bin/bash
+  shell_argument: -c
+processes:
+  xvfb:
+    command: exec Xvfb :99 -screen 0 1920x1080x24 +extension GLX -nolisten tcp -noreset
+    availability: &restart
+      restart: always
+      backoff_seconds: 5
+      max_restarts: 5
+    shutdown: &shutdown
+      signal: 15
+      timeout_seconds: 15
+    readiness_probe: &xprobe
+      exec:
+        command: /opt/ai-cad/scripts/healthcheck.sh xvfb
+      initial_delay_seconds: 1
+      period_seconds: 3
+      timeout_seconds: 6
+      failure_threshold: 20
+    liveness_probe:
+      <<: *xprobe
+      initial_delay_seconds: 30
+      period_seconds: 15
+      failure_threshold: 3
+  herdr:
+    command: exec /opt/ai-cad/scripts/start-herdr.sh
+    availability: *restart
+    shutdown: *shutdown
+    readiness_probe: &hprobe
+      exec:
+        command: /opt/ai-cad/scripts/healthcheck.sh herdr
+      initial_delay_seconds: 1
+      period_seconds: 3
+      timeout_seconds: 6
+      failure_threshold: 20
+    liveness_probe:
+      <<: *hprobe
+      initial_delay_seconds: 30
+      period_seconds: 15
+      failure_threshold: 3
+  ovis:
+    command: exec /opt/ai-cad/scripts/start-ovis.sh
+    depends_on:
+      herdr:
+        condition: process_healthy
+    availability: *restart
+    shutdown: *shutdown
+    readiness_probe: &oprobe
+      exec:
+        command: /opt/ai-cad/scripts/healthcheck.sh ovis
+      initial_delay_seconds: 2
+      period_seconds: 3
+      timeout_seconds: 6
+      failure_threshold: 30
+    liveness_probe:
+      <<: *oprobe
+      initial_delay_seconds: 60
+      period_seconds: 15
+      failure_threshold: 3
+  cad:
+    command: exec /opt/ai-cad/scripts/start-cad-engine.sh
+    depends_on:
+      xvfb:
+        condition: process_healthy
+    availability: *restart
+    shutdown:
+      signal: 15
+      timeout_seconds: 25
+      parent_only: true
+    readiness_probe: &cprobe
+      exec:
+        command: /opt/ai-cad/scripts/healthcheck.sh cad
+      initial_delay_seconds: 3
+      period_seconds: 5
+      timeout_seconds: 12
+      failure_threshold: 30
+    liveness_probe:
+      <<: *cprobe
+      initial_delay_seconds: 90
+      period_seconds: 20
+      failure_threshold: 3

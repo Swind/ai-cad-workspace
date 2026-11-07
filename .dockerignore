@@ -1,0 +1,7 @@
+.git
+.env
+home
+workspace
+.test-state
+**/__pycache__
+*.log
