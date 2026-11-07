@@ -88,6 +88,8 @@ cad status --json
 
 Snapshot 失敗時，先檢查 `DISPLAY=:99`、`LIBGL_ALWAYS_SOFTWARE=1`、Xvfb readiness 與 `glxinfo -B`，再跑 smoke test。HTTP 可用不代表 OCCT 渲染正常；完整渲染只在 smoke test／CI 執行。
 
+注意：上游 hc 的 CLI（含 `server status`）可能在 Core 不存在時自動啟動背景程序。因此停機診斷請用 `python /opt/ai-cad/scripts/check-herdr.py`；啟動／重啟一律使用 Process Compose，不用 `hc server start/restart`。上述 `hc server status` 僅供 Core 已健康時查看詳細資訊。
+
 ## 掛載、升級與回滾
 
 - `./workspace:/workspace`：模型原始碼、STEP、STL、PNG。

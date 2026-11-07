@@ -76,5 +76,5 @@ jobs:
             /tmp/ai-cad-test-*/container.log
             /tmp/ai-cad-test-*/before-recreate.log
             /tmp/ai-cad-test-*/supervisor.log
-            /tmp/ai-cad-test-*/workspace/smoke-*/*.png
+            /tmp/ai-cad-test-*/artifacts/smoke-*/*.png
             digest.json

@@ -37,6 +37,7 @@
 | kill -KILL 各服務 | PASS，四個服務由 PC 重啟，PID 更換，health 恢復 |
 | 故障恢復後再次建模／渲染 | PASS |
 | docker stop、recreate | PASS，非 137 退出、PID=0；新容器 health 恢復 |
+| Process Compose 原生 restart、Docker SIGINT | PASS，單服務手動重啟恢復、SIGINT 在 60 秒內結束 |
 | 持久化 | PASS，workspace 與 HOME marker、hc keep terminal 記錄保留並恢復為新 shell |
 
 初期失敗與修正：
@@ -49,8 +50,31 @@
 
 ## 發布
 
-GitHub Actions / GHCR 尚待執行，未宣稱已發布。Debian snapshot 固定後的最後建置及整合測試正在執行。
+Debian snapshot 固定後，`docker build -t ai-cad-workspace:verified .` 與
+`TEST_UID=23456 TEST_GID=23457 bash tests/test-container.sh ai-cad-workspace:verified` 已成功；本機 Image ID
+`sha256:6e24cfeb6e862bd8f0baac838043e0fec4f946414ac312568db386a49edd627c`（此為本機 image ID，不是 GHCR 發布 digest）。
+
+首次程式碼已推送 main：`0135b1fbd5b8b33528a7eea2f6045d431307f170`。
+遠端 [CI #1](https://github.com/Swind/ai-cad-workspace/actions/runs/42384586290) 與
+[Release #1](https://github.com/Swind/ai-cad-workspace/actions/runs/42384586313) 已啟動，結果尚待確認；未宣稱已發布。
 
 ## 人工驗收
 
 各 Agent 個人登入與真實雲端 LLM 對話；另一台 LAN 電腦的 Viewer 旋轉／縮放／重建刷新；瀏覽器 Pane disconnect/reconnect 與對話 resume。CI 不假裝這些已通過。
+
+## 原規格 A01–A12 對照
+
+| ID | 狀態 | 證據／待驗收部分 |
+|---|---|---|
+| A01 | PASS | 安裝／建模／測試全部在 Docker 執行，沒有在 Host 全域安裝 CAD 或 Agent |
+| A02 | PASS | `/proc/<service-pid>` UID/GID、非 root exec id；兩組部署 UID/GID |
+| A03 | PASS | Host `stat` 新建 workspace 檔案 UID/GID |
+| A04 | PARTIAL | HOME/hc/Ovis 記錄 recreate 後保留；私人 Agent 認證恢復待人工 |
+| A05 | PARTIAL | Ovis health 與 published port 通過；另一台電腦瀏覽器待人工 |
+| A06 | PARTIAL | 真實 Ovis/hc Pane 與 CLI 執行、跨 HTTP connection 重連通過；真人 LLM 與完整瀏覽器互動待人工 |
+| A07 | PARTIAL | 固定 build123d 模型、幾何與輸出通過；由登入後 LLM 自行產生模型待人工 |
+| A08 | PARTIAL | LAN Host、Origin、Cookie、token 的 HTTP 測試通過；遠端瀏覽器旋轉縮放待人工 |
+| A09 | PASS | stop/recreate 後 Web health、workspace、hc keep 記錄恢復 |
+| A10 | PENDING | main/PR workflow 已提交，遠端 run 待確認；尚未建立 PR 事件實測 |
+| A11 | PENDING | GHCR run 待確認；不同 UID/GID 本機部署已通過 |
+| A12 | PARTIAL | image digest / state 備份回滾流程已寫；尚無第二個應用版本可跨版本實測 |

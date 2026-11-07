@@ -9,6 +9,8 @@ gid=${TEST_GID:-$(id -g)}
 [[ $uid != 0 ]] || uid=12345
 [[ $gid != 0 ]] || gid=12345
 cleanup() {
+  # docker cp assigns local ownership to the caller, including alternate-UID runs.
+  docker cp "$name:/workspace" "$root/artifacts" >/dev/null 2>&1 || true
   docker cp "$name:/run/ai-cad/supervisor.log" "$root/supervisor.log" >/dev/null 2>&1 || true
   docker logs "$name" > "$root/container.log" 2>&1 || true
   docker rm -f "$name" >/dev/null 2>&1 || true
@@ -40,7 +42,7 @@ as_agent /opt/ai-cad/scripts/setup-cad-agents.sh
 # shellcheck disable=SC2016 # Expanded inside the container.
 as_agent bash -ec 'test "$(id -u)" = "$PUID"; test "$(id -g)" = "$PGID"; touch /workspace/ownership; echo retained > "$HOME/persistence-marker"'
 [[ $(stat -c '%u:%g' "$root/workspace/ownership") == "$uid:$gid" ]]
-as_agent bash -c 'process-compose -U process list; hc --version; codex --version; claude --version; opencode --version'
+as_agent bash -ec 'process-compose -U process list; hc --version; codex --version; claude --version; opencode --version'
 ovis_port=$(docker port "$name" 7317/tcp | cut -d: -f2)
 cad_port=$(docker port "$name" 3245/tcp | cut -d: -f2)
 curl -fsS "http://127.0.0.1:$ovis_port/api/health" | grep -q '"ok":true'
