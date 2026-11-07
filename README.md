@@ -2,29 +2,121 @@
 
 一個 Linux amd64 Container，使用 Process Compose 管理 Xvfb、Herdr Core、Ovis 與 text-to-cad。預裝 OpenCode、Codex、Claude Code；Host 只需要 Docker Engine 與 Compose。
 
+## 目的
+
+把 AI Agent、瀏覽器工作介面、CAD 核心與無螢幕渲染環境封裝成可部署的工作站：
+
+- 在 Ovis 的瀏覽器終端中操作 Agent，於共同的 `/workspace` 編寫與執行 CAD 模型。
+- 用 text-to-cad 產生模型、STEP/STL 與預覽圖片，透過 CAD Viewer 檢視結果。
+- 程式與依賴隨 Image 固定，模型、認證與對話留在 Host 掛載目錄，方便重建與備份。
+- 透過 GitHub Actions 建置、驗證並發布 GHCR Image，Host 不必安裝 Python、Node 或 CAD 工具。
+
+適合個人或可信任 LAN 使用；這不是多使用者隔離平台。Agent 使用的 LLM 帳戶／API 需自行設定，Image 不包含模型服務或登入憑證。
+
+## 架構
+
+```text
+Host / LAN 瀏覽器
+  ├─ :7317 → Ovis（工作介面／終端）→ Herdr Core → Agent sessions
+  └─ :3245 → text-to-cad（CAD Engine／Viewer）
+
+單一 Docker Container
+  Docker init → entrypoint（UID/GID 初始化、降權）→ Process Compose
+    ├─ herdr：hc serve
+    ├─ ovis ：等待 herdr healthy
+    ├─ xvfb ：虛擬顯示 :99 + Mesa software OpenGL
+    └─ cad  ：等待 xvfb healthy
+
+  /opt         程式、CAD kernel、固定版本依賴
+  /home/agent  ← ./home       認證、對話、設定、狀態與 cache
+  /workspace   ← ./workspace  模型原始碼及產物
+```
+
+| 元件 | 職責 |
+| --- | --- |
+| Process Compose | 四個常駐服務的啟動依賴、健康檢查、有限重試與有序停止；管理介面僅使用 Unix socket |
+| Herdr Core（`hc`） | 管理終端與 Agent sessions；個別 Agent 不註冊成 Process Compose 服務 |
+| Ovis | 瀏覽器工作介面，透過既有 hc socket 操作終端 |
+| text-to-cad | 建模執行、CAD Viewer、匯出與截圖，MCP 供 Agent plugin 使用 |
+| Xvfb／Mesa | 無實體螢幕、無 GPU 的 OpenGL 渲染環境 |
+| OpenCode／Codex／Claude Code | 預裝的三款互動式 coding agents，共用持久化 HOME 與 workspace |
+
+CAD 前景 CLI 使用限於 `0.10.4` 的小幅 `--host` 修補，直接監聽 `0.0.0.0:3245`；原有 token 認證保留。實作理由見 [決策紀錄](docs/decisions.md)。
+
 ## 部署
 
+### 1. 準備 Host
+
+- Linux amd64、Docker Engine 與 Docker Compose plugin（`docker compose`）。
+- 使用有 Docker 權限的非 root Host 使用者執行下列命令。
+- 建議至少 4 GB RAM；多 Agent 同時使用建議 8 GB 以上，另預留數 GB Image／cache 空間。
+- 首次拉取 Image、Agent 登入與雲端 LLM 呼叫需要網路；預裝的核心 CAD 流程已通過斷網測試。
+
+### 2. 建立目錄與設定
+
 ```bash
-git clone git@github.com:Swind/ai-cad-workspace.git
+git clone https://github.com/Swind/ai-cad-workspace.git
 cd ai-cad-workspace
 mkdir -p home workspace
-# 不覆蓋已有設定；token 由容器工具產生，不輸出到畫面。
-test ! -e .env && (
+
+# 不覆蓋已有設定；以權限 600 建立 .env。
+if [ ! -e .env ]; then (
   umask 077
-  printf 'HOST_UID=%s\nHOST_GID=%s\n' "$(id -u)" "$(id -g)"
-  printf 'IMAGE=ghcr.io/swind/ai-cad-workspace:main\n'
-  printf 'OVIS_TOKEN='
-  docker run --rm --entrypoint python python:3.14.0-slim-bookworm \
+  token=$(docker run --rm --entrypoint python python:3.14.0-slim-bookworm \
     -c 'import secrets; print(secrets.token_hex(32))'
-) > .env
+  ) || exit 1
+  {
+    printf 'HOST_UID=%s\nHOST_GID=%s\n' "$(id -u)" "$(id -g)"
+    printf 'IMAGE=ghcr.io/swind/ai-cad-workspace:main\n'
+    printf 'OVIS_TOKEN=%s\n' "$token"
+    printf 'OVIS_BIND_IP=0.0.0.0\nCAD_BIND_IP=0.0.0.0\n'
+  } > .env
+); fi
+```
+
+也可以複製 `.env.example` 後手動編輯；必須換掉範例 token，UID/GID 使用 Host 的 `id -u`／`id -g`。Compose 不會自動建立掛載目錄，請先完成 `mkdir`。
+
+### 3. 拉取並啟動
+
+```bash
+docker compose config --quiet
 docker compose pull
 docker compose up -d
+docker compose ps
 docker compose logs -f
 ```
 
-首次 GHCR 發布完成前可用 `docker compose build && docker compose up -d`。Private Repository 的 GHCR package 可能需要先 `docker login ghcr.io`，或在 GitHub 調整 Package visibility。
+等待容器顯示 `healthy`。`logs -f` 可用 Ctrl+C 離開，容器仍在背景執行。若 GHCR package 為 private，先使用有讀取權限的帳戶 `docker login ghcr.io`。
 
 Ovis：`http://<host-ip>:7317`，使用 `.env` 的 token 認證。CAD Viewer：`http://<host-ip>:3245`，模型連結須保留 CAD 自己產生的認證資訊，見下方。
+
+### 從原始碼建置
+
+在 `.env` 將 `IMAGE` 改為 `ai-cad-workspace:local`，然後執行：
+
+```bash
+docker compose build
+docker compose up -d --pull never
+```
+
+## 設定方式
+
+`.env` 由 Compose 讀取；修改後執行 `docker compose up -d` 套用。
+
+| 設定 | 必填／預設 | 說明 |
+| --- | --- | --- |
+| `HOST_UID` | 必填 | Host 使用者 UID；映射為容器 `PUID`，必須為正整數且非 root |
+| `HOST_GID` | 必填 | Host 群組 GID；映射為容器 `PGID`，必須為正整數 |
+| `IMAGE` | `ghcr.io/swind/ai-cad-workspace:main` | 可使用 tag 或 `ghcr.io/swind/ai-cad-workspace@sha256:…` 固定 digest |
+| `OVIS_TOKEN` | 必填 | Ovis 認證 token；與 CAD Viewer 自行產生的 token 不同 |
+| `OVIS_BIND_IP` | `0.0.0.0` | Host 發布 7317 port 的介面；`127.0.0.1` 限本機存取 |
+| `CAD_BIND_IP` | `0.0.0.0` | Host 發布 3245 port 的介面；可指定 Host LAN IP |
+
+Host port 目前固定為 7317／3245。若有衝突，修改 `compose.yaml` 的 `ports` 左側 Host port，右側容器 port 保持不變；產生 CAD 連結時傳入實際 `host:port`。
+
+`DISPLAY=:99`、`LIBGL_ALWAYS_SOFTWARE=1` 等 runtime 設定已寫入 Dockerfile。服務參數與重試策略在 `config/process-compose.yaml`；修改 Image 內的檔案後需重新建置。
+
+Provider API Key 若需傳入容器，請在 Compose 的 `environment` 明確加入該 Provider 官方變數；只寫進 `.env` 不會自動傳入容器。互動式登入則依下一節操作，認證保留於 `./home`。
 
 ## Shell 與 Agent 登入
 
@@ -65,6 +157,8 @@ python /opt/ai-cad/scripts/cad-link.py <host-ip> /workspace/my-model.xbf
 
 最後一個命令印出帶認證的 LAN URL，只替換 authority，保留路徑與 token。請不要把完整連結貼入公開日誌。
 
+`my-model.py` 是你建立的模型；輸出的 `.xbf` 檔名由模型決定，請以 `cad run` 的實際輸出替換範例路徑。第一次驗證環境可只執行 `smoke-cad.sh`，它會自動建立測試模型與產物。
+
 ## Process Compose 管理
 
 以下在非 root 容器 shell 執行。管理使用 `/run/ai-cad/process-compose.sock`，沒有額外管理 TCP port 或 TUI。
@@ -82,6 +176,8 @@ process-compose -f /opt/ai-cad/config/process-compose.yaml --dry-run
 所有服務輸出亦可使用 `docker compose logs -f ai-cad` 查看。Supervisor 的排程／restart 原因另在 `/run/ai-cad/supervisor.log`。各服務最多自動重啟 5 次，間隔 5 秒；耗盡後保留失敗狀態與日誌，Docker healthcheck 會失敗。Docker 不會因 unhealthy 自行重啟，修正原因後手動 restart 服務／容器。
 
 ## 診斷
+
+以下在非 root 容器 shell 執行：
 
 ```bash
 /opt/ai-cad/scripts/doctor.sh
@@ -107,6 +203,28 @@ Snapshot 失敗時，先檢查 `DISPLAY=:99`、`LIBGL_ALWAYS_SOFTWARE=1`、Xvfb 
 升級前停止容器，備份兩個掛載目錄並記錄當前 image digest；將 `.env` 的 `IMAGE` 設為新版本 digest，執行 `docker compose pull && docker compose up -d`，再執行 doctor／smoke test。回滾需停止容器，還原舊 digest 與升級前的 **home/workspace 備份**；上游狀態格式可能只支援向前遷移。
 
 此環境限可信任 LAN。不掛載 Host Docker Socket 或整個 Home，不使用 privileged。LAN HTTP 上的 token 未加密；若網路不可信應部署 TLS 入口。
+
+Host 上常用的生命週期命令：
+
+```bash
+docker compose stop       # 正常停止，保留容器與資料
+docker compose start      # 啟動已停止的容器
+docker compose down       # 移除容器與 network，保留 home/workspace
+```
+
+## Repository 結構
+
+| 路徑 | 內容 |
+| --- | --- |
+| `Dockerfile`、`versions.env` | Image 建置、runtime 與工具版本／checksums |
+| `compose.yaml`、`.env.example` | Host 部署、ports、掛載與設定範例 |
+| `config/` | Process Compose、Debian snapshot、OpenCode 設定及 schema |
+| `requirements.in`、`requirements.lock` | Python 依賴與完整 hash lock |
+| `agents/` | 三款 Agent 的 npm dependencies／lock |
+| `scripts/` | 安裝、啟動、健康檢查、Agent plugin 設定及 CAD smoke test |
+| `tests/` | 幾何、渲染、Viewer 認證、服務恢復與持久化測試 |
+| `.github/workflows/` | CI、Release 與共用建置／發布流程 |
+| `docs/` | 架構、安裝、操作、上游版本、決策與驗收紀錄 |
 
 ## 測試與發布
 
