@@ -20,7 +20,9 @@ COPY agents/ /opt/agents/
 RUN cd /opt/agents && npm ci --omit=dev && \
     ln -s /opt/agents/node_modules/.bin/opencode /usr/local/bin/opencode && \
     ln -s /opt/agents/node_modules/.bin/codex /usr/local/bin/codex && \
-    ln -s /opt/agents/node_modules/.bin/claude /usr/local/bin/claude
+    ln -s /opt/agents/node_modules/.bin/claude /usr/local/bin/claude && \
+    ln -s /opt/agents/node_modules/.bin/pi /usr/local/bin/pi && \
+    ln -s /opt/agents/node_modules/.bin/omp /usr/local/bin/omp
 COPY requirements.lock /opt/ai-cad/requirements.lock
 RUN uv venv --python /usr/local/bin/python /opt/cad && \
     uv pip sync --python /opt/cad/bin/python --require-hashes /opt/ai-cad/requirements.lock
@@ -44,7 +46,8 @@ RUN visudo -cf /etc/sudoers.d/agent-chown && \
     chmod +x /opt/ai-cad/scripts/*.sh /opt/ai-cad/tests/*.sh && \
     groupadd -g 1500 agent && useradd -u 1500 -g agent -m -s /bin/bash agent && \
     mkdir -p /workspace /run/ai-cad && \
-    process-compose version && hc --version && codex --version && claude --version && opencode --version
+    process-compose version && hc --version && codex --version && claude --version && opencode --version && \
+    pi --version && omp --version
 WORKDIR /workspace
 EXPOSE 7317 3245
 HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=3 CMD ["/opt/ai-cad/scripts/healthcheck.sh"]

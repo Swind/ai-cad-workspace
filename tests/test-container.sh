@@ -38,6 +38,7 @@ start
 ready
 as_agent /opt/ai-cad/tests/test-config.sh
 as_agent /opt/ai-cad/scripts/setup-cad-agents.sh
+as_agent python /opt/ai-cad/tests/check-pi-skills.py
 # shellcheck disable=SC2016 # Expanded inside the container.
 as_agent bash -ec 'test "$(id -u)" = "$PUID"; test "$(id -g)" = "$PGID"; touch /workspace/ownership; echo retained > "$HOME/persistence-marker"'
 [[ $(stat -c '%u:%g' "$root/workspace/ownership") == "$uid:$gid" ]]
@@ -47,7 +48,7 @@ docker exec "$name" touch /tmp/chown-permission-check
 # shellcheck disable=SC2016 # Expanded inside the container.
 as_agent bash -ec 'sudo -n /usr/bin/chown "$(id -u):$(id -g)" /tmp/chown-permission-check; test -O /tmp/chown-permission-check'
 docker exec "$name" rm /tmp/chown-permission-check
-as_agent bash -ec 'process-compose -U process list; hc --version; codex --version; claude --version; opencode --version'
+as_agent bash -ec 'process-compose -U process list; hc --version; codex --version; claude --version; opencode --version; pi --version; omp --version'
 ovis_port=$(docker port "$name" 7317/tcp | cut -d: -f2)
 cad_port=$(docker port "$name" 3245/tcp | cut -d: -f2)
 curl -fsS "http://127.0.0.1:$ovis_port/api/health" | grep -q '"ok":true'

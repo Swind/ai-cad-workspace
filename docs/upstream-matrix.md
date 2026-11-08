@@ -15,7 +15,9 @@
 | OpenCode | 2.2.6 / @opencode/cli | https://opencode.ai/v2/docs/；官方 npm 安裝方式 |
 | Codex | 0.167.0 / @openai/codex | https://github.com/openai/codex/releases/tag/rust-v0.167.0 |
 | Claude Code | 2.1.311 / @anthropic-ai/claude-code | https://code.claude.com/docs/en/setup；查詢時 stable channel |
+| Pi | 1.5.0 / @earendil-works/pi-coding-agent | https://pi.dev/docs/latest/quickstart；`pi` |
+| Oh My Pi | 18.18.1 / @oh-my-pi/pi-coding-agent | https://github.com/can1357/oh-my-pi；Bun 執行 `omp` |
 
-二進位下載的 SHA256 在 versions.env；Python 全部遞迴依賴固定於 requirements.lock；三款 Agent 使用 agents/package-lock.json。Ovis 使用固定 commit 的 bun.lock。PC schema 與 Apache-2.0 license 保存在 config/vendor。
+二進位下載的 SHA256 在 versions.env；Python 全部遞迴依賴固定於 requirements.lock；五款 Agent 使用 agents/package-lock.json。Ovis 使用固定 commit 的 bun.lock。PC schema 與 Apache-2.0 license 保存在 config/vendor。
 
 GitHub Actions 使用查詢當日官方 release 的 commit SHA，見 workflow 中的版本註解。只發布 amd64，沒有宣稱 arm64 已驗證。

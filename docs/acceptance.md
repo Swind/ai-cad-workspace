@@ -1,5 +1,14 @@
 # 驗收紀錄
 
+## Pi／Oh My Pi 預裝（2026-11-09）
+
+- Pi `@earendil-works/pi-coding-agent@1.5.0`、Oh My Pi `@oh-my-pi/pi-coding-agent@18.18.1` 加入 npm integrity lock，Image 內指令為 `pi`／`omp`。
+- `ai-cad-workspace:pi` 建置 PASS；全新 HOME、斷網、非 root 執行 version／help PASS。
+- UID/GID 23456:23457 完整 container 整合測試 PASS，涵蓋既有服務與 CAD 回歸測試。
+- 使用 Pi 自身 skill loader 與 `omp skill list --json` 驗證六個 CAD skills 均可發現；已加入整合測試。
+- 現有部署已備份、切換本機新版、重新設定 skills，容器 healthy；實際部署兩款 CLI 版本與 skills discovery PASS。
+- 登入、真實 LLM 對話、額外 LSP／browser／desktop 功能未驗收；可在 Ovis 一般 shell pane 手動啟動兩款 CLI。
+
 ## text-to-cad 0.11.1 升級（2026-11-08）
 
 - 上游 tag v0.11.1，commit `4ad86d6`；三個 CAD 套件固定為 0.11.1。

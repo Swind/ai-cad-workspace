@@ -1,6 +1,6 @@
 # AI CAD Workspace
 
-一個 Linux amd64 Container，使用 Process Compose 管理 Xvfb、Herdr Core、Ovis 與 text-to-cad。預裝 OpenCode、Codex、Claude Code；Host 只需要 Docker Engine 與 Compose。
+一個 Linux amd64 Container，使用 Process Compose 管理 Xvfb、Herdr Core、Ovis 與 text-to-cad。預裝 OpenCode、Codex、Claude Code、Pi、Oh My Pi；Host 只需要 Docker Engine 與 Compose。
 
 ## 目的
 
@@ -39,7 +39,7 @@ Host / LAN 瀏覽器
 | Ovis | 瀏覽器工作介面，透過既有 hc socket 操作終端 |
 | text-to-cad | 建模執行、CAD Viewer、匯出與截圖，MCP 供 Agent plugin 使用 |
 | Xvfb／Mesa | 無實體螢幕、無 GPU 的 OpenGL 渲染環境 |
-| OpenCode／Codex／Claude Code | 預裝的三款互動式 coding agents，共用持久化 HOME 與 workspace |
+| OpenCode／Codex／Claude Code／Pi／Oh My Pi | 預裝的五款互動式 coding agents，共用持久化 HOME 與 workspace |
 
 CAD 前景 CLI 使用限於 `0.11.1` 的小幅 `--host` 修補，直接監聽 `0.0.0.0:3245`；原有 token 認證保留。實作理由見 [決策紀錄](docs/decisions.md)。
 
@@ -131,9 +131,23 @@ claude
 opencode
 ```
 
-setup 命令使用 Image 內固定 release 的 plugin：Codex／Claude Code 安裝完整 plugin，OpenCode 連結同版 skills，沒有為同一 Agent 重複安裝 skills + plugin。MCP config 指向 `/opt/cad/bin/cad-mcp`，避免 uvx 在啟動時另行下載 runtime。每次升級後可重新執行；既有不同來源的 text-to-cad plugin 請先依各 Agent 官方命令移除，避免重複。
+setup 命令使用 Image 內固定 release 的 plugin：Codex／Claude Code 安裝完整 plugin，OpenCode／Pi／Oh My Pi 連結同版 skills，沒有為同一 Agent 重複安裝 skills + plugin。MCP config 指向 `/opt/cad/bin/cad-mcp`，避免 uvx 在啟動時另行下載 runtime。每次升級後可重新執行；既有不同來源的 text-to-cad plugin 請先依各 Agent 官方命令移除，避免重複。
 
 Codex 使用 device login；Claude Code 首次執行依提示登入；OpenCode 使用 `/connect`。需要各自可用的帳戶／Provider，CI 不包含私人登入。API Key 可於個人 shell 使用 provider 官方環境變數設定，勿寫入 image 或 Git。
+
+### Pi 與 Oh My Pi
+
+兩者為獨立 CLI，可直接在 Ovis 的一般終端 pane 執行：
+
+```bash
+pi      # Pi 1.5.0；以 /login 設定 Provider，/model 選模型
+omp     # Oh My Pi 18.18.1；以 /login 登入、/model 選模型
+```
+
+Oh My Pi 是 Pi 的獨立分支，不是裝入 Pi 的外掛。程式固定安裝於 `/opt/agents`，
+各自的認證／設定／session 留在 `~/.pi/agent/` 與 `~/.omp/agent/`，透過 `./home` 持久化。
+執行 setup 後，各自 `skills/` 會連結 text-to-cad 的六個 skills，使用預裝的 CAD CLI。
+Pi 可用 `pi --continue` 接續最近的 session；登入後的真實 LLM 呼叫須使用個人帳戶驗證。
 
 從 Ovis 開啟 Agent Pane，或在容器 shell 使用 `hc run --bg --name work codex`。個別 Agent 退出後不會被 Process Compose 強制重開。瀏覽器關閉不終止 Pane；容器重啟會終止原程序，改用 `codex resume`、`claude --resume` 或 OpenCode 的 Session 選單恢復已保存對話。
 
@@ -235,7 +249,7 @@ docker compose down       # 移除容器與 network，保留 home/workspace
 | `compose.yaml`、`.env.example` | Host 部署、ports、掛載與設定範例 |
 | `config/` | Process Compose、Debian snapshot、OpenCode 設定及 schema |
 | `requirements.in`、`requirements.lock` | Python 依賴與完整 hash lock |
-| `agents/` | 三款 Agent 的 npm dependencies／lock |
+| `agents/` | 五款 Agent 的 npm dependencies／lock |
 | `scripts/` | 安裝、啟動、健康檢查、Agent plugin 設定及 CAD smoke test |
 | `tests/` | 幾何、渲染、Viewer 認證、服務恢復與持久化測試 |
 | `.github/workflows/` | CI、Release 與共用建置／發布流程 |
