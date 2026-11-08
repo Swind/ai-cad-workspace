@@ -1,9 +1,9 @@
-"""0.10.4-only patch: expose the daemon bind address on its foreground CLI."""
+"""0.11.1-only patch: expose the daemon bind address on its foreground CLI."""
 from importlib.metadata import version
 from pathlib import Path
 import cad_server
 
-assert version("cad-server") == "0.10.4"
+assert version("cad-server") == "0.11.1"
 root = Path(cad_server.__file__).parent / "engine"
 changes = {
     "cli.py": [

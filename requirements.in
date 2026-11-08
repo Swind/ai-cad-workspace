@@ -1,6 +1,6 @@
-cad-server==0.10.4
-cad[build123d]==0.10.4
-cad-mcp==0.10.4
+cad-server==0.11.1
+cad[build123d]==0.11.1
+cad-mcp==0.11.1
 # Bundled dfm/dfam-check skills (upstream skills/*/requirements.txt).
 trimesh==5.2.0
 numpy==2.5.4

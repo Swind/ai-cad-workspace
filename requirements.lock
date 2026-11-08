@@ -24,19 +24,19 @@ build123d==0.13.0 \
     --hash=sha256:177f114e5f0514054189134346d386c7004048f8e58430b9b84b74a04fbc94fe \
     --hash=sha256:97c5577a777ff7219714b10f70f253c7109e84bb3ec621eea5d4597b4c7656b4
     # via cad
-cad==0.10.4 \
-    --hash=sha256:3cd483d2b34b4c03e536b0836c0c867d0499cf78346be8891d3d077fa10a1b82 \
-    --hash=sha256:c7d2e1e132cd05094051a3da9d5df67e7a6076b2cee775a39f104e7a2482cf1f
+cad==0.11.1 \
+    --hash=sha256:2c53a2ba9a40198920d23ddc1c80c4b793c77b523aee22e2e4d2621b06d7884f \
+    --hash=sha256:ffadaf457adb8c6f23ee1d7f319300f3526a864775b4a3f83cfd82702232387f
     # via
     #   -r requirements.in
     #   cad-server
-cad-mcp==0.10.4 \
-    --hash=sha256:6e7bb05b3af59ae7ff3eba153b5d7a2bc43457ccc15e5cd1ba3d22d1c63a9424 \
-    --hash=sha256:ab7b2b82b229ba317d87b288e9d6d5d699ddbffcdc9d5341749602f33360a7c3
+cad-mcp==0.11.1 \
+    --hash=sha256:06f87f5656cff3186371e262352d4c8057b22c37aaf9f9fb089e734f95c016cb \
+    --hash=sha256:3caa5779b4699685a52a30cd01c4d42537541d18f0d48a6ef0a77db487753f73
     # via -r requirements.in
-cad-server==0.10.4 \
-    --hash=sha256:e2074794e08f5761c4f478822b1f67b2c8aa8c725c2a77d29707bf4cd6a846c6 \
-    --hash=sha256:ed94e8842a9ec912f0777deede1ce749f6e95a8a005d16c2f61354a57c478a9c
+cad-server==0.11.1 \
+    --hash=sha256:01c42efa84f84a71169545cf84421d16d4c4d7ebaac678064e023d1758a344f4 \
+    --hash=sha256:da5cbecbb602c76b1db0acabc49aa8691b511c5a4303b94fb2220993d4a6d849
     # via -r requirements.in
 cadquery-ocp-novtk==8.0.1.1.0 \
     --hash=sha256:1068b21e450451afba778687f94e9d4c5b3d974c736e3748e31015c33d443d23 \

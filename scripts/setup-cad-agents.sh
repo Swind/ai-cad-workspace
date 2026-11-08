@@ -18,6 +18,11 @@ for name in ('codex.mcp.json', 'claude.mcp.json'):
     path.write_text(json.dumps(data, indent=2) + '\n')
 skills = Path.home() / '.config/opencode/skills'
 skills.mkdir(parents=True, exist_ok=True)
+# Remove only our broken links to skills retired by an upstream release.
+for target in skills.iterdir():
+    if (target.is_symlink() and not target.exists()
+            and target.resolve().parent == (root / 'skills').resolve()):
+        target.unlink()
 for source in (root / 'skills').iterdir():
     target = skills / source.name
     if target.is_symlink() and target.resolve() == source.resolve():
@@ -30,5 +35,6 @@ codex plugin marketplace add "$HOME/.local/state/cad/plugin"
 codex plugin add text-to-cad@text-to-cad
 claude plugin marketplace add "$HOME/.local/state/cad/plugin"
 claude plugin install text-to-cad@text-to-cad
+claude plugin update text-to-cad@text-to-cad
 codex plugin list --json
 claude plugin list

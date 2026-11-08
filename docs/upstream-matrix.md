@@ -7,7 +7,7 @@
 | Process Compose | v1.124.0 | https://github.com/F1bonacc1/process-compose/tree/v1.124.0；`process-compose version`、`--dry-run`、`-t=false -U --ordered-shutdown up` |
 | hc | 0.1.18 | https://releases.herdr.dev/core/0.1.18/manifest.json；`hc serve`、`hc server status --json` |
 | Ovis | v0.5.0 / 347a989d1c2c71ab273c1a6d9c900054568f97b8 | https://github.com/devswha/ovis/blob/v0.5.0/INSTALL.md；`bun install --frozen-lockfile`、`bun run build`、`bun run server/index.ts` |
-| text-to-cad | v0.10.4 | https://github.com/earthtojake/text-to-cad/tree/v0.10.4；`cad server --port 3245`（本 Image 加 --host 修補）、`cad run`、`cad snapshot`、`cad export` |
+| text-to-cad | v0.11.1（2026-11-08 更新） | https://github.com/earthtojake/text-to-cad/tree/v0.11.1；`cad server --port 3245`（本 Image 加 --host 修補）、`cad run`、`cad xbf snapshot`、`cad xbf export` |
 | Bun | 1.4.4 | https://github.com/oven-sh/bun/releases/tag/bun-v1.4.4 |
 | uv | 0.13.7 | https://github.com/astral-sh/uv/releases/tag/0.13.7 |
 | Python | 3.14.0 | Docker official python slim-bookworm，Dockerfile 固定 digest |

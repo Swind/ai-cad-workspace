@@ -41,7 +41,7 @@ Host / LAN 瀏覽器
 | Xvfb／Mesa | 無實體螢幕、無 GPU 的 OpenGL 渲染環境 |
 | OpenCode／Codex／Claude Code | 預裝的三款互動式 coding agents，共用持久化 HOME 與 workspace |
 
-CAD 前景 CLI 使用限於 `0.10.4` 的小幅 `--host` 修補，直接監聽 `0.0.0.0:3245`；原有 token 認證保留。實作理由見 [決策紀錄](docs/decisions.md)。
+CAD 前景 CLI 使用限於 `0.11.1` 的小幅 `--host` 修補，直接監聽 `0.0.0.0:3245`；原有 token 認證保留。實作理由見 [決策紀錄](docs/decisions.md)。
 
 ## 部署
 
@@ -139,7 +139,7 @@ Codex 使用 device login；Claude Code 首次執行依提示登入；OpenCode �
 
 ## CAD
 
-Image 已依 text-to-cad v0.10.4 預裝 Python 3.14、uv、`cad-server`、`cad-mcp`、
+Image 已依 text-to-cad v0.11.1 預裝 Python 3.14、uv、`cad-server`、`cad-mcp`、
 `cad[build123d]`（含 OpenCascade/OCP），以及 Xvfb、Mesa software OpenGL、X11 libraries 與字型。
 核心與 kernel 同在 `/opt/cad`，首次建模、STEP/STL 匯出及 PNG 截圖不用再下載環境。
 另預裝官方 `dfm`／`dfam-check` 的 trimesh、NumPy、Rtree、SciPy、NetworkX、lxml，
@@ -150,8 +150,8 @@ Image 已依 text-to-cad v0.10.4 預裝 Python 3.14、uv、`cad-server`、`cad-m
 # 容器 shell
 /opt/ai-cad/scripts/smoke-cad.sh
 cad run /workspace/my-model.py
-cad snapshot /workspace/my-model.xbf /workspace/iso.png --camera iso
-cad export /workspace/my-model.xbf /workspace/model.step /workspace/model.stl
+cad xbf snapshot /workspace/my-model.xbf /workspace/iso.png --camera iso
+cad xbf export /workspace/my-model.xbf /workspace/model.step /workspace/model.stl
 python /opt/ai-cad/scripts/cad-link.py <host-ip> /workspace/my-model.xbf
 ```
 

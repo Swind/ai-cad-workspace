@@ -1,5 +1,14 @@
 # 實作決策
 
+## 2026-11-08：text-to-cad 0.11.1
+
+`cad`、`cad-server`、`cad-mcp` 同步升至 0.11.1，重新產生 hash lock，其他依賴版本保持不變。
+上游仍未提供前景 server 的 `--host`，原四處修補已對新版原文重新驗證，版本保護改為 0.11.1。
+CLI 改採文件類型命令：`cad xbf export`／`cad xbf snapshot`。
+新版有自動更新機制，確認既有 `CAD_UPDATE_CHECK=0` 也會停用它，以 Image 升級為準。
+Skills 已整併為 cad、engineering-drawing、pcb、print3d、robot-simulation、sendcutsend；
+setup 只清理自己指向官方 skills 目錄的失效 symlink，保留其他來源連結，並執行 Claude plugin update 更新快取紀錄。
+
 ## 2026-11-08：Agent chown 授權
 
 使用者選擇允許 `agent` 免密碼執行任意 `/usr/bin/chown`。Image 安裝 sudo，

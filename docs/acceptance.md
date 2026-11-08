@@ -1,5 +1,16 @@
 # 驗收紀錄
 
+## text-to-cad 0.11.1 升級（2026-11-08）
+
+- 上游 tag v0.11.1，commit `4ad86d6`；三個 CAD 套件固定為 0.11.1。
+- 本機 Image `ai-cad-workspace:cad-0.11.1` 建置成功。
+- UID/GID 23456:23457 的完整 container 整合測試 PASS（CAD 幾何、匯出、截圖、Viewer 認證、Ovis terminal、四服務恢復、sudo chown、停止與重建）。
+- 全新 HOME、非 root、`--network none` 的 CAD smoke test PASS。
+- 新版 setup 的離線重複執行、官方退休 skill 失效連結移除、其他來源失效連結保留均 PASS。
+- 現有部署已切換本機新版並 healthy；掛載資料上的新版 setup 與 smoke test PASS。Codex／Claude plugin 均為 0.11.1，OpenCode 使用新版六個 skills。
+- 升級前 HOME／workspace 與 .env 已備份至 Host 的 `~/ai-cad-backups/`；未執行還原演練。
+- 此版本 GHCR 發布結果待 Actions 確認；本機已部署，不依賴該次發布完成。
+
 施工中；尚未標記 Done。機械化整合測試已通過，GHCR 與人工驗收狀態見下方。
 
 ## 已執行
