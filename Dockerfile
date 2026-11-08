@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bash ca-certificates curl git gosu unzip jq procps ripgrep openssh-client \
     xvfb x11-utils mesa-utils libgl1-mesa-dri libglx-mesa0 libglu1-mesa \
     libxrender1 libxext6 libsm6 libice6 libfontconfig1 fonts-dejavu-core \
-    shellcheck && rm -rf /var/lib/apt/lists/*
+    shellcheck sudo && rm -rf /var/lib/apt/lists/*
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
 COPY --from=node /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
@@ -37,8 +37,10 @@ ENV PATH="/opt/cad/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/
 COPY scripts/ /opt/ai-cad/scripts/
 COPY config/ /opt/ai-cad/config/
 COPY config/opencode.json /etc/opencode/opencode.json
+COPY --chmod=0440 config/agent-sudoers /etc/sudoers.d/agent-chown
 COPY tests/ /opt/ai-cad/tests/
-RUN python /opt/ai-cad/scripts/patch-cad-host.py && \
+RUN visudo -cf /etc/sudoers.d/agent-chown && \
+    python /opt/ai-cad/scripts/patch-cad-host.py && \
     chmod +x /opt/ai-cad/scripts/*.sh /opt/ai-cad/tests/*.sh && \
     groupadd -g 1500 agent && useradd -u 1500 -g agent -m -s /bin/bash agent && \
     mkdir -p /workspace /run/ai-cad && \

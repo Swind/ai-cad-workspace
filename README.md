@@ -161,6 +161,21 @@ python /opt/ai-cad/scripts/cad-link.py <host-ip> /workspace/my-model.xbf
 
 ## Process Compose 管理
 
+### 修復檔案所有權
+
+`agent` 可免密碼執行 `sudo chown`，適用於動態映射後的 UID/GID。例如在容器終端：
+
+```bash
+sudo chown "$(id -u):$(id -g)" /tmp/opencode
+```
+
+啟動腳本也會自動將 `/tmp/opencode` 設為 agent 所有。這項 sudo 授權允許任意 chown 參數，
+可改動容器系統檔案，以及 Host 掛載的 `home`／`workspace` 所有權，具有擴大至 root 權限的風險。
+因此 Compose 未啟用 `no-new-privileges`；此部署僅適用於可信任的使用者與 Agent 工作負載。
+改動 Dockerfile／Compose 後需重建 Image 並重建容器，單純 restart 不會套用。
+
+### 服務操作
+
 以下在非 root 容器 shell 執行。管理使用 `/run/ai-cad/process-compose.sock`，沒有額外管理 TCP port 或 TUI。
 
 ```bash

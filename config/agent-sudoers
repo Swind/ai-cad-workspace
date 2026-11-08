@@ -1,0 +1,2 @@
+# Username follows the UID/GID mapping performed by entrypoint.
+agent ALL=(root) NOPASSWD: /usr/bin/chown

@@ -1,5 +1,14 @@
 # 實作決策
 
+## 2026-11-08：Agent chown 授權
+
+使用者選擇允許 `agent` 免密碼執行任意 `/usr/bin/chown`。Image 安裝 sudo，
+`config/agent-sudoers` 依使用者名稱授權以相容動態 UID/GID；Compose 與整合測試移除
+`no-new-privileges`，使 sudo 可提權。任意 root chown 可影響系統及 bind mount，
+並可能間接取得完整 root 權限，此為使用者選擇的權限模型。
+入口初始化同時修復 `/tmp/opencode` 的目錄 owner（不遞迴），避免建置時 root 建立的目錄阻擋 Agent。
+本機 `ai-cad-workspace:chown` 建置與 UID/GID 23456:23457 的完整整合測試通過。
+
 ## 2026-11-07
 
 1. 新目錄最初只有規格書；遠端 `git@github.com:Swind/ai-cad-workspace.git` 為空，初始化 main。尚未存在可沿用的部署程式。

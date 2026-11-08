@@ -21,7 +21,6 @@ mkdir -p "$root/home" "$root/workspace"
 docker run --rm --entrypoint sh -v "$root:/test" "$image" -c "chown $uid:$gid /test/home /test/workspace"
 start() {
   docker run -d --name "$name" --init --stop-timeout 60 \
-    --security-opt no-new-privileges:true \
     -e PUID="$uid" -e PGID="$gid" -e OVIS_TOKEN=ci-only-not-a-production-token \
     -v "$root/home:/home/agent" -v "$root/workspace:/workspace" \
     -p 127.0.0.1::7317 -p 127.0.0.1::3245 "$image" >/dev/null
@@ -42,6 +41,12 @@ as_agent /opt/ai-cad/scripts/setup-cad-agents.sh
 # shellcheck disable=SC2016 # Expanded inside the container.
 as_agent bash -ec 'test "$(id -u)" = "$PUID"; test "$(id -g)" = "$PGID"; touch /workspace/ownership; echo retained > "$HOME/persistence-marker"'
 [[ $(stat -c '%u:%g' "$root/workspace/ownership") == "$uid:$gid" ]]
+# shellcheck disable=SC2016 # Expanded inside the container.
+as_agent bash -ec 'probe=$(mktemp /tmp/opencode/write-check-XXXXXX); rm "$probe"'
+docker exec "$name" touch /tmp/chown-permission-check
+# shellcheck disable=SC2016 # Expanded inside the container.
+as_agent bash -ec 'sudo -n /usr/bin/chown "$(id -u):$(id -g)" /tmp/chown-permission-check; test -O /tmp/chown-permission-check'
+docker exec "$name" rm /tmp/chown-permission-check
 as_agent bash -ec 'process-compose -U process list; hc --version; codex --version; claude --version; opencode --version'
 ovis_port=$(docker port "$name" 7317/tcp | cut -d: -f2)
 cad_port=$(docker port "$name" 3245/tcp | cut -d: -f2)

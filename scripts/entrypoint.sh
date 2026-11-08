@@ -12,6 +12,7 @@ if [[ $(id -u) == 0 ]]; then
   usermod -u "$PUID" -g "$PGID" agent
   usermod -d /home/agent agent
   install -d -m 700 -o "$PUID" -g "$PGID" /run/ai-cad
+  install -d -m 700 -o "$PUID" -g "$PGID" /tmp/opencode
   install -d -m 1777 /tmp/.X11-unix
   exec gosu "$PUID:$PGID" "$0" "$@"
 fi

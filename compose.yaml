@@ -27,5 +27,3 @@ services:
         bind:
           create_host_path: false
     working_dir: /workspace
-    security_opt:
-      - no-new-privileges:true
