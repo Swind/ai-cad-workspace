@@ -1,5 +1,15 @@
 # 實作決策
 
+## 2026-11-13：Image 固定版本更新
+
+- text-to-cad／cad-server／cad-mcp 升至 0.11.9；Herdr Core 0.1.20、Ovis 0.5.3、uv 0.13.8，五款 Agent 同步採查詢時的 npm latest 精確版本，詳見 upstream-matrix.md。Python／Node base image、Debian snapshot、Bun 與 Process Compose 保持原 pin。
+- CAD 0.11.9 仍沒有前景 `--host`；重新對照新版原文保留四處小幅修補與版本斷言，沒有變更 token、Host、Origin 或 cookie 認證策略。
+- 官方 skills 增為八個，新增 fea／render。這次只升級既有 Image 能力與 bundled skills，不安裝 FEA、KiCad、MuJoCo、Blender 或切片／實體印表機工具；核心建模／匯出／渲染維持預裝及離線驗證範圍。
+- Claude Code 上游 plugin 改為 skills-only，其 manifest 不再載入 MCP；保留給其他 Agent 使用的 `claude.mcp.json` 不代表 Claude Code 仍會啟動它。Codex 保留 MCP，固定使用 `/opt/cad/bin/cad-mcp`。setup 仍不得覆蓋使用者自有 skills。
+- Ovis terminal 整合測試由直接執行的 `codex --version` 取得期望值，再驗證真實 pane 輸出及重連，不將 Agent 版本重複硬編碼在測試。
+- CAD 的 `/opt/cad/bin/uv` 在 PATH 上優先於獨立工具，因此 `requirements.in` 同時固定 uv 0.13.8，避免有效版本仍停在舊 lock 的 0.13.7。
+- npm audit 回報 Oh My Pi 18.19.0 → puppeteer-core 25.3.0 → chromium-bidi 16.0.1 → zod 3.25.76 的高風險記憶體耗盡漏洞（[GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5)，四個套件節點、同一條傳遞鏈）。chromium-bidi 要求 Zod `^3.24.1`，修補版為 4.6.6；不以未驗證的跨主版 override 或降級 Oh My Pi 取代本次官方新版，保留並明示此未修復風險。
+
 ## 2026-11-08：text-to-cad 0.11.1
 
 `cad`、`cad-server`、`cad-mcp` 同步升至 0.11.1，重新產生 hash lock，其他依賴版本保持不變。

@@ -1,6 +1,7 @@
 """Exercise Ovis's real hc-backed terminal over separate HTTP connections."""
 import json
 import os
+import subprocess
 import time
 import urllib.request
 from urllib.parse import urlencode
@@ -18,16 +19,17 @@ def call(path, body=None):
         return json.load(response)
 
 
+expected = subprocess.check_output(['codex', '--version'], text=True).strip()
 created = call('/api/workspace/create', {'cwd': '/workspace', 'label': 'CI real PTY'})
 pane = created['pane_id']
 call('/api/pane/input', {'pane_id': pane, 'text': 'codex --version\r'})
 for _ in range(30):
     output = call('/api/pane/read?' + urlencode({'pane_id': pane, 'lines': 40}))
-    if 'codex-cli 0.167.0' in json.dumps(output):
+    if expected in json.dumps(output):
         break
     time.sleep(1)
 else:
     raise AssertionError(output)
 # A new HTTP client can still read the same terminal after the original closed.
-assert 'codex-cli 0.167.0' in json.dumps(call('/api/pane/read?' + urlencode({'pane_id': pane})))
+assert expected in json.dumps(call('/api/pane/read?' + urlencode({'pane_id': pane})))
 print('PASS: Ovis creates real hc pane, executes Codex CLI, reconnects to its output')

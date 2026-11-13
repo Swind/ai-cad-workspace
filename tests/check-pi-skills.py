@@ -3,9 +3,16 @@ import json
 from pathlib import Path
 import subprocess
 
-expected = {p.name for p in (Path.home() / '.local/state/cad/plugin/skills').iterdir()
-            if (p / 'SKILL.md').is_file()}
-assert expected
+root = Path.home() / '.local/state/cad/plugin'
+expected = {'cad', 'engineering-drawing', 'fea', 'pcb', 'print3d', 'render',
+            'robot-simulation', 'sendcutsend'}
+bundled = {p.name for p in (root / 'skills').iterdir() if (p / 'SKILL.md').is_file()}
+assert bundled == expected, (bundled, expected)
+for name in ('codex.mcp.json', 'claude.mcp.json', 'cursor.mcp.json', 'mcp.json', 'gemini-extension.json'):
+    server = json.loads((root / name).read_text())['mcpServers']['cad']
+    assert server['command'] == '/opt/cad/bin/cad-mcp' and server['args'] == [], name
+# Upstream intentionally gives Claude Code skills without its own MCP server.
+assert 'mcpServers' not in json.loads((root / '.claude-plugin/plugin.json').read_text())
 pi = json.loads(subprocess.check_output([
     'node', '--input-type=module', '-e',
     "import {loadSkills} from '/opt/agents/node_modules/@earendil-works/pi-coding-agent/dist/core/skills.js';"

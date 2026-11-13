@@ -41,7 +41,7 @@ Host / LAN 瀏覽器
 | Xvfb／Mesa | 無實體螢幕、無 GPU 的 OpenGL 渲染環境 |
 | OpenCode／Codex／Claude Code／Pi／Oh My Pi | 預裝的五款互動式 coding agents，共用持久化 HOME 與 workspace |
 
-CAD 前景 CLI 使用限於 `0.11.1` 的小幅 `--host` 修補，直接監聽 `0.0.0.0:3245`；原有 token 認證保留。實作理由見 [決策紀錄](docs/decisions.md)。
+CAD 前景 CLI 使用限於 `0.11.9` 的小幅 `--host` 修補，直接監聽 `0.0.0.0:3245`；原有 token 認證保留。實作理由見 [決策紀錄](docs/decisions.md)。
 
 ## 部署
 
@@ -131,7 +131,7 @@ claude
 opencode
 ```
 
-setup 命令使用 Image 內固定 release 的 plugin：Codex／Claude Code 安裝完整 plugin，OpenCode／Pi／Oh My Pi 連結同版 skills，沒有為同一 Agent 重複安裝 skills + plugin。MCP config 指向 `/opt/cad/bin/cad-mcp`，避免 uvx 在啟動時另行下載 runtime。每次升級後可重新執行；既有不同來源的 text-to-cad plugin 請先依各 Agent 官方命令移除，避免重複。
+setup 命令使用 Image 內固定 release 的 plugin：Codex／Claude Code 安裝完整 plugin，OpenCode／Pi／Oh My Pi 連結同版 skills，沒有為同一 Agent 重複安裝 skills + plugin。Codex 的 MCP config 指向 `/opt/cad/bin/cad-mcp`，避免 uvx 在啟動時另行下載 runtime；Claude Code 的上游 plugin 為 skills-only，直接使用預裝 CAD CLI。每次升級後可重新執行；既有不同來源的 text-to-cad plugin 請先依各 Agent 官方命令移除，避免重複。
 
 Codex 使用 device login；Claude Code 首次執行依提示登入；OpenCode 使用 `/connect`。需要各自可用的帳戶／Provider，CI 不包含私人登入。API Key 可於個人 shell 使用 provider 官方環境變數設定，勿寫入 image 或 Git。
 
@@ -140,24 +140,26 @@ Codex 使用 device login；Claude Code 首次執行依提示登入；OpenCode �
 兩者為獨立 CLI，可直接在 Ovis 的一般終端 pane 執行：
 
 ```bash
-pi      # Pi 1.5.0；以 /login 設定 Provider，/model 選模型
-omp     # Oh My Pi 18.18.1；以 /login 登入、/model 選模型
+pi      # Pi 1.5.2；以 /login 設定 Provider，/model 選模型
+omp     # Oh My Pi 18.19.0；以 /login 登入、/model 選模型
 ```
 
 Oh My Pi 是 Pi 的獨立分支，不是裝入 Pi 的外掛。程式固定安裝於 `/opt/agents`，
 各自的認證／設定／session 留在 `~/.pi/agent/` 與 `~/.omp/agent/`，透過 `./home` 持久化。
-執行 setup 後，各自 `skills/` 會連結 text-to-cad 的六個 skills，使用預裝的 CAD CLI。
+執行 setup 後，各自 `skills/` 會連結 text-to-cad 的八個 skills，使用預裝的 CAD CLI。
 Pi 可用 `pi --continue` 接續最近的 session；登入後的真實 LLM 呼叫須使用個人帳戶驗證。
 
 從 Ovis 開啟 Agent Pane，或在容器 shell 使用 `hc run --bg --name work codex`。個別 Agent 退出後不會被 Process Compose 強制重開。瀏覽器關閉不終止 Pane；容器重啟會終止原程序，改用 `codex resume`、`claude --resume` 或 OpenCode 的 Session 選單恢復已保存對話。
 
 ## CAD
 
-Image 已依 text-to-cad v0.11.1 預裝 Python 3.14、uv、`cad-server`、`cad-mcp`、
+Image 已依 text-to-cad v0.11.9 預裝 Python 3.14、uv、`cad-server`、`cad-mcp`、
 `cad[build123d]`（含 OpenCascade/OCP），以及 Xvfb、Mesa software OpenGL、X11 libraries 與字型。
 核心與 kernel 同在 `/opt/cad`，首次建模、STEP/STL 匯出及 PNG 截圖不用再下載環境。
-另預裝官方 `dfm`／`dfam-check` 的 trimesh、NumPy、Rtree、SciPy、NetworkX、lxml，
-版本與 hashes 固定在 `requirements.lock`。OrcaSlicer 切片及印表機整合屬額外工具，未包含；
+另保留 print3d 製造檢查所需的 trimesh、NumPy、Rtree、SciPy、NetworkX、lxml，
+版本與 hashes 固定在 `requirements.lock`。上游八個 skills 為 cad、engineering-drawing、fea、
+pcb、print3d、render、robot-simulation、sendcutsend；提供 skill 不代表預裝其全部工具。
+FEA、KiCad、MuJoCo、Blender、OrcaSlicer 切片及實體印表機整合屬額外能力，未包含；
 模型自行宣告的其他 Python 套件仍可能需要網路安裝。
 
 ```bash

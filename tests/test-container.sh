@@ -37,7 +37,28 @@ ready() {
 start
 ready
 as_agent /opt/ai-cad/tests/test-config.sh
-as_agent /opt/ai-cad/scripts/setup-cad-agents.sh
+# Preserve user skills and unrelated broken links while retiring only our old links.
+# shellcheck disable=SC2016 # Expanded inside the container.
+as_agent bash -ec '
+  for directory in .config/opencode/skills .pi/agent/skills .omp/agent/skills; do
+    mkdir -p "$HOME/$directory/user-kept"
+    printf "retained\n" > "$HOME/$directory/user-kept/marker"
+    ln -s "$HOME/.local/state/cad/plugin/skills/dfm" "$HOME/$directory/dfm"
+    ln -s "$HOME/.local/state/cad/plugin/skills/dfam-check" "$HOME/$directory/dfam-check"
+    ln -s "$HOME/missing-user-skill" "$HOME/$directory/user-broken"
+  done
+'
+as_agent env UV_OFFLINE=1 /opt/ai-cad/scripts/setup-cad-agents.sh
+as_agent env UV_OFFLINE=1 /opt/ai-cad/scripts/setup-cad-agents.sh
+# shellcheck disable=SC2016 # Expanded inside the container.
+as_agent bash -ec '
+  for directory in .config/opencode/skills .pi/agent/skills .omp/agent/skills; do
+    test "$(cat "$HOME/$directory/user-kept/marker")" = retained
+    test -L "$HOME/$directory/user-broken"
+    test ! -L "$HOME/$directory/dfm"
+    test ! -L "$HOME/$directory/dfam-check"
+  done
+'
 as_agent python /opt/ai-cad/tests/check-pi-skills.py
 # shellcheck disable=SC2016 # Expanded inside the container.
 as_agent bash -ec 'test "$(id -u)" = "$PUID"; test "$(id -g)" = "$PGID"; touch /workspace/ownership; echo retained > "$HOME/persistence-marker"'

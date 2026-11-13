@@ -1,5 +1,15 @@
 # 驗收紀錄
 
+## Image 固定版本更新（2026-11-13）
+
+- `ai-cad-workspace:20261113-cad-0.11.9` 建置 PASS；CAD trio 0.11.9、Herdr Core 0.1.20、Ovis 0.5.3、uv 0.13.8、OpenCode 2.2.7、Codex 0.167.2、Claude Code 2.1.322、Pi 1.5.2、Oh My Pi 18.19.0。版本及來源見 upstream-matrix.md。
+- `bash tests/test-container.sh ai-cad-workspace:20261113-cad-0.11.9`（Host UID/GID 1000:1000）PASS；`TEST_UID=23456 TEST_GID=23457` 同命令 PASS。證據目錄分別為 `/tmp/ai-cad-test-cadBGa`、`/tmp/ai-cad-test-bIGtql`。
+- 涵蓋固定 schema、Process Compose dry-run／有限重試、ShellCheck、非 root 身分／sudo chown、八個 skills discovery、setup 重複執行、使用者 skills 與無關失效連結保留、官方退休連結清除、Viewer token／LAN Host／Origin／cookie、Ovis 真實 PTY 執行與重連、CAD 幾何／STEP／STL／PNG／mesh、四服務 crash recovery、停止與重建持久化。
+- 額外以舊 `ai-cad-workspace:pi` 在全新臨時 HOME 建立 0.11.1 整合，再掛入新版 Image、`--network none`：服務 healthy、plugin 升至 0.11.9、Pi／Oh My Pi 發現八個 skills、建模／匯出／截圖 PASS。`/opt/cad/bin/uv` 與 `/usr/local/bin/uv` 均為 0.13.8。隔離資料位於 `/tmp/ai-cad-migration-104SiP`。
+- 已人工檢視 iso PNG：板件及中央通孔正常；自動幾何與非空白像素檢查 PASS。
+- 建置及補充證據位於 `/tmp/ai-cad-upgrade-20261113/`。npm audit 回報四個 high 套件節點，屬 Oh My Pi 瀏覽器依賴鏈的同一個 Zod 記憶體耗盡漏洞，尚未修復；限制及保留官方相容依賴的理由見 decisions.md。
+- 本節為 commit 前的隔離驗證，不代表已發布 GHCR 或已完成現有部署切換。個人登入／真實 LLM 對話、跨機 LAN 人工操作、可選 FEA／KiCad／MuJoCo／Blender 能力未驗收。
+
 ## Pi／Oh My Pi 預裝（2026-11-09）
 
 - Pi `@earendil-works/pi-coding-agent@1.5.0`、Oh My Pi `@oh-my-pi/pi-coding-agent@18.18.1` 加入 npm integrity lock，Image 內指令為 `pi`／`omp`。
